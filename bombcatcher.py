@@ -63,7 +63,7 @@ class Catcher(object):
     def __init__(self):
         self.x = 0
         self.y = 495
-        self.width = 50
+        self.width = 600
         self.height = 5
         self.speed = 20
         self.color = blue
@@ -87,6 +87,9 @@ class Brick(object):
 
 class BombCatcher(object):
     def __init__(self):
+        self.pause = False
+        self.bspeed = 0
+        self.cspeed = 0
         self.score = 0
         self.live = 100
         self.game_over = False
@@ -104,17 +107,28 @@ while True:
         if ev.type == QUIT:
             sys.exit()
         elif ev.type == KEYDOWN :
+            if ev.key == K_ESCAPE:
+                sys.exit()
             if not bcgame.game_over :
-                if ev.key == K_ESCAPE:
-                    sys.exit()
-                if ev.key == K_LEFT and bcgame.catcher.x - bcgame.catcher.speed >= 0 :
-                    bcgame.catcher.x -= bcgame.catcher.speed
-                if ev.key == K_RIGHT and (bcgame.catcher.x + bcgame.catcher.width + bcgame.catcher.speed)<= screen_w :
-                    bcgame.catcher.x += bcgame.catcher.speed
-                if ev.key == K_UP:
-                    bcgame.bomb.speed += 0.01
-                if ev.key == K_DOWN and bcgame.bomb.speed > 0.01 :
-                    bcgame.bomb.speed -= 0.01
+                if ev.key == K_SPACE :
+                    bcgame.pause = not bcgame.pause
+                    if bcgame.pause :
+                        bcgame.bspeed = bcgame.bomb.speed
+                        bcgame.cspeed = bcgame.catcher.speed
+                        bcgame.bomb.speed = 0
+                        bcgame.catcher.speed = 0
+                    else :
+                        bcgame.bomb.speed = bcgame.bspeed
+                        bcgame.catcher.speed = bcgame.cspeed
+                if not bcgame.pause :
+                    if ev.key == K_LEFT and bcgame.catcher.x - bcgame.catcher.speed >= 0 :
+                        bcgame.catcher.x -= bcgame.catcher.speed
+                    if ev.key == K_RIGHT and (bcgame.catcher.x + bcgame.catcher.width + bcgame.catcher.speed)<= screen_w :
+                        bcgame.catcher.x += bcgame.catcher.speed
+                    if ev.key == K_UP :
+                        bcgame.bomb.speed += 0.01
+                    if ev.key == K_DOWN and bcgame.bomb.speed > 0.01 :
+                        bcgame.bomb.speed -= 0.01
             elif ev.key == K_KP_ENTER or ev.key == K_RETURN :
                 bcgame = BombCatcher()
 
@@ -124,9 +138,8 @@ while True:
         print_text(font1, 200, 200, "You lost!!! Please <Enter> to restart!!!")
     else :
         if ((bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.catcher.y and bcgame.bomb.x >= bcgame.catcher.x and bcgame.bomb.x <= (bcgame.catcher.x + bcgame.catcher.width)) :
-            bcgame.score += 1
             bcgame.bomb.down = False
-            if bcgame.score % 5 == 0:
+            if bcgame.score % 5 == 0 and bcgame.score > 0:
                 bcgame.bomb.speed += 0.01
             bcgame.bomb.move()
         elif (bcgame.bomb.y + bcgame.bomb.radius) >= screen_h:
@@ -139,10 +152,12 @@ while True:
         elif ((bcgame.bomb.x + bcgame.bomb.radius) >= bcgame.brick.x and (bcgame.bomb.x - bcgame.bomb.radius) <= (bcgame.brick.x + bcgame.brick.width) and
             (bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.brick.y and (bcgame.bomb.y - bcgame.bomb.radius) <= (bcgame.brick.y + bcgame.brick.height)) :
             bcgame.score += 1
+            if ((bcgame.bomb.x + bcgame.bomb.radius) >= bcgame.brick.x and (bcgame.bomb.x - bcgame.bomb.radius) <= (bcgame.brick.x + bcgame.brick.width) and (bcgame.bomb.y < bcgame.brick.y or bcgame.bomb.y > bcgame.brick.y)) :
+                bcgame.bomb.down = not bcgame.bomb.down
+            elif ((bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.brick.y and (bcgame.bomb.y - bcgame.bomb.radius) <= (bcgame.brick.y + bcgame.brick.height) and (bcgame.bomb.x < bcgame.brick.x or bcgame.bomb.x > bcgame.brick.x)) :
+                bcgame.bomb.left = not bcgame.bomb.left
             bcgame.brick = Brick()
             bcgame.brick.set_position(bcgame.bomb)
-            bcgame.bomb.down = not bcgame.bomb.down
-            bcgame.bomb.left = not bcgame.bomb.left
             bcgame.bomb.move()
         else :
             bcgame.bomb.move()
@@ -152,5 +167,5 @@ while True:
     pygame.draw.circle(screen, bcgame.bomb.color, (int(bcgame.bomb.x), int(bcgame.bomb.y)), bcgame.bomb.radius, 0)
     print_text(font1, 5, 5, "Score : " + str(bcgame.score))
     print_text(font1, 5, 35, "Live : " + str(bcgame.live))
-    # print_text(font1, 500, 5, "Speed : " + str(round(bcgame.bomb.speed,2)))
+    print_text(font1, 500, 5, "Speed : " + str(round(bcgame.bomb.speed,2)))
     pygame.display.update()
