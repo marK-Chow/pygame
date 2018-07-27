@@ -1,5 +1,5 @@
 import random
-
+# Catcher
 class Catcher(object):
     def __init__(self, color = (0, 0, 0)):
         self.x = 0
@@ -8,7 +8,7 @@ class Catcher(object):
         self.height = 5
         self.speed = 50
         self.color = color
-
+# Brick
 class Brick(object):
     def __init__(self, color = (0, 0, 0)):
         self.show = False
@@ -25,3 +25,32 @@ class Brick(object):
                 self.y = random.randint(50, 200)
             else :
                 self.show = True
+# Bomb
+class Bomb(object):
+    def __init__(self, color = (0, 0, 0)):
+        self.x = random.randint(10, 590)
+        self.y = random.randint(40, 200)
+        self.speed = 0.01
+        self.radius = 5
+        self.color = color
+        self.down = True
+        self.left = True
+
+    def move(self):
+        # Bomb x move
+        if self.left :
+            self.x -= self.speed
+        else :
+            self.x += self.speed
+
+        # Bomb y move
+        if self.down :
+            self.y += self.speed
+        else :
+            self.y -= self.speed
+
+    def changeDirLR(self):
+        self.left = not self.left
+
+    def changeDirUD(self):
+        self.down = not self.down

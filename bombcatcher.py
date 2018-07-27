@@ -1,6 +1,7 @@
 # version 0.0.0.0.1
 
 import sys, pygame, random, time
+import element as el
 
 from pygame.locals import *
 
@@ -28,63 +29,6 @@ def print_text(font, x, y, text, color = white):
     imgTxt = font.render(text, True, color)
     screen.blit(imgTxt, (x, y))
 
-class Bomb(object):
-    def __init__(self):
-        self.x = random.randint(10, 590)
-        self.y = random.randint(40, 200)
-        self.speed = 0.01
-        self.radius = 5
-        self.color = white
-        self.down = True
-        self.left = True
-
-
-    def move(self):
-
-        # Hit the wall
-        if self.x + self.radius  > screen_w or self.x - self.radius  < 0 :
-            self.left = not self.left
-        if self.y - self.radius  <= 0 :
-            self.down = not self.down
-
-        # Bomb x move
-        if self.left :
-            self.x -= self.speed
-        else :
-            self.x += self.speed
-
-        # Bomb y move
-        if self.down :
-            self.y += self.speed
-        else :
-            self.y -= self.speed
-
-class Catcher(object):
-    def __init__(self):
-        self.x = 0
-        self.y = 495
-        self.width = 600
-        self.height = 5
-        self.speed = 20
-        self.color = blue
-
-class Brick(object):
-    def __init__(self):
-        self.show = False
-        self.width = 50
-        self.height = 10
-        self.color = yellow
-        self.x = random.randint(10, 590)
-        self.y = random.randint(40, 200)
-
-    def set_position(self, bomb):
-        while not self.show:
-            if bomb.x >= self.x and bomb.x <= self.x + self.width and bomb.y >= self.y and bomb.y <= self.y + self.height :
-                self.x = random.randint(10, 590)
-                self.y = random.randint(40, 200)
-            else :
-                self.show = True
-
 class BombCatcher(object):
     def __init__(self):
         self.pause = False
@@ -93,14 +37,32 @@ class BombCatcher(object):
         self.score = 0
         self.live = 100
         self.game_over = False
-        self.bomb = Bomb()
-        self.catcher = Catcher()
-        self.brick = Brick()
+
+    def set_bomb(self, color = white):
+        self.bomb = el.Bomb(color)
+
+    def set_brick(self, color = yellow):
+        self.brick = el.Brick(color)
         self.brick.set_position(self.bomb)
+
+    def set_catcher(self, color = blue):
+        self.catcher = el.Catcher(color)
+
+    def hit_wall(self):
+        if self.bomb.x + self.bomb.radius  > screen_w or self.bomb.x - self.bomb.radius  < 0 :
+            self.bomb.changeDirLR()
+
+        if self.bomb.y - self.bomb.radius <= 0 :
+            self.bomb.changeDirUD()
+
+    def set_game_element(self, catcher_color = blue, brick_color = yellow, bomb_color = white):
+        self.set_bomb()
+        self.set_catcher()
+        self.set_brick()
 
 
 bcgame = BombCatcher()
-
+bcgame.set_game_element()
 # Game loop
 while True:
     for ev in pygame.event.get():
@@ -138,9 +100,7 @@ while True:
         print_text(font1, 200, 200, "You lost!!! Please <Enter> to restart!!!")
     else :
         if ((bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.catcher.y and bcgame.bomb.x >= bcgame.catcher.x and bcgame.bomb.x <= (bcgame.catcher.x + bcgame.catcher.width)) :
-            bcgame.bomb.down = False
-            if bcgame.score % 5 == 0 and bcgame.score > 0:
-                bcgame.bomb.speed += 0.01
+            bcgame.bomb.changeDirUD()
             bcgame.bomb.move()
         elif (bcgame.bomb.y + bcgame.bomb.radius) >= screen_h:
             bcgame.live -= 1
@@ -148,18 +108,21 @@ while True:
                 bcgame.game_over = True
             else :
                 time.sleep(0.3)
-                bcgame.bomb = Bomb()
+                bcgame.set_bomb()
         elif ((bcgame.bomb.x + bcgame.bomb.radius) >= bcgame.brick.x and (bcgame.bomb.x - bcgame.bomb.radius) <= (bcgame.brick.x + bcgame.brick.width) and
             (bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.brick.y and (bcgame.bomb.y - bcgame.bomb.radius) <= (bcgame.brick.y + bcgame.brick.height)) :
             bcgame.score += 1
             if ((bcgame.bomb.x + bcgame.bomb.radius) >= bcgame.brick.x and (bcgame.bomb.x - bcgame.bomb.radius) <= (bcgame.brick.x + bcgame.brick.width) and (bcgame.bomb.y < bcgame.brick.y or bcgame.bomb.y > bcgame.brick.y)) :
-                bcgame.bomb.down = not bcgame.bomb.down
+                bcgame.bomb.changeDirUD()
             elif ((bcgame.bomb.y + bcgame.bomb.radius) >= bcgame.brick.y and (bcgame.bomb.y - bcgame.bomb.radius) <= (bcgame.brick.y + bcgame.brick.height) and (bcgame.bomb.x < bcgame.brick.x or bcgame.bomb.x > bcgame.brick.x)) :
-                bcgame.bomb.left = not bcgame.bomb.left
-            bcgame.brick = Brick()
+                bcgame.bomb.changeDirLR()
+            if bcgame.score % 5 == 0 and bcgame.score > 0:
+                bcgame.bomb.speed += 0.01
+            bcgame.set_brick()
             bcgame.brick.set_position(bcgame.bomb)
             bcgame.bomb.move()
         else :
+            bcgame.hit_wall()
             bcgame.bomb.move()
 
     pygame.draw.rect(screen, bcgame.brick.color, (bcgame.brick.x, bcgame.brick.y, bcgame.brick.width, bcgame.brick.height), 0)
