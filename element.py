@@ -12,11 +12,16 @@ class Catcher(object):
 class Brick(object):
     def __init__(self, color = (0, 0, 0)):
         self.show = False
-        self.width = 50
-        self.height = 10
         self.color = color
+        self.dir = random.randint(1,2)
         self.x = random.randint(10, 540)
         self.y = random.randint(40, 200)
+        if self.dir == 1:
+            self.width = 50
+            self.height = 10
+        else :
+            self.width = 10
+            self.height = 50
 
     def set_position(self, bomb):
         while not self.show:
